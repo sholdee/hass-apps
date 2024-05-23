@@ -269,21 +269,24 @@ class ActorBase:
         re-sent unless force_resend is True.
         It returns whether a value has been sent or not and the actual
         value now wanted by this actor."""
-
+    
         value = self.filter_set_value(value)
         if value is None:
             return False, self._wanted_value
-
+    
         self._wanted_value = value
+        self.log(f"Attempting to set value: {value}, force_resend={force_resend}", level="DEBUG")
+        self.log(f"Current value: {self._current_value}, Wanted value: {self._wanted_value}, is_synced={self.is_synced}", level="DEBUG")
+    
         if not force_resend and self.is_synced:
             self.log(
                 "Not sending value {} redundantly.".format(repr(value)), level="DEBUG"
             )
             return False, value
-
+    
         self.cancel_resending_timer()
         self._resending_cb({"left_tries": self.cfg["send_retries"] + 1})
-
+    
         return True, value
 
     @staticmethod
