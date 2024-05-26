@@ -201,11 +201,11 @@ class DualThermostatActor(ActorBase):
     def check_config_plausibility(self, state: dict) -> None:
         """Is called during initialization to warn the user about some
         possible common configuration mistakes."""
-
+    
         if not state:
             self.log("Thermostat couldn't be found.", level="WARNING")
             return
-
+    
         required_attrs = ["target_temp_high", "target_temp_low"]
         if self.cfg["supports_hvac_modes"]:
             required_attrs.append("state")
@@ -216,20 +216,20 @@ class DualThermostatActor(ActorBase):
                     "Please check your config!".format(attr, list(state.keys())),
                     level="WARNING",
                 )
-
-        temp_attrs = ["temperature", "current_temperature"]
+    
+        temp_attrs = ["target_temp_high", "target_temp_low", "current_temperature"]
         for attr in temp_attrs:
             value = state.get(attr)
             try:
                 value = float(value)  # type: ignore
             except (TypeError, ValueError):
                 self.log(
-                    "The value {!r} of attribute {!r} is not a valid dual temperature.".format(
+                    "The value {!r} of attribute {!r} is not a valid temperature.".format(
                         value, attr
                     ),
                     level="WARNING",
                 )
-
+    
         allowed_hvac_modes = state.get("hvac_modes")
         if not self.cfg["supports_hvac_modes"]:
             if allowed_hvac_modes:
@@ -241,7 +241,7 @@ class DualThermostatActor(ActorBase):
                     level="WARNING",
                 )
             return
-
+    
         if not allowed_hvac_modes:
             self.log(
                 "Attributes for thermostat contain no 'hvac_modes', Consider "
