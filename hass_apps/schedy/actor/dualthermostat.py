@@ -175,8 +175,6 @@ class DualThermostatActor(ActorBase):
     name = "dualthermostat"
     config_schema_dict = {
         **ActorBase.config_schema_dict,
-        #TODO: Look into error when enabling this
-        # "Configuration error: expected list for dictionary value @ data['delta']. Got None"
         vol.Optional("delta", default=DualTemp([0, 0])): vol.All(TEMP_SCHEMA, vol.NotIn([DualTemp(OFF)])),
         vol.Optional("min_temp", default=None): vol.Any(
             vol.All(TEMP_SCHEMA, vol.NotIn([DualTemp(OFF)])), None
