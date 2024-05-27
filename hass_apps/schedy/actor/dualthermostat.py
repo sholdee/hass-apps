@@ -199,11 +199,11 @@ class DualThermostatActor(ActorBase):
     def check_config_plausibility(self, state: dict) -> None:
         """Is called during initialization to warn the user about some
         possible common configuration mistakes."""
-    
+
         if not state:
             self.log("Thermostat couldn't be found.", level="WARNING")
             return
-    
+
         required_attrs = ["target_temp_high", "target_temp_low"]
         if self.cfg["supports_hvac_modes"]:
             required_attrs.append("state")
@@ -214,7 +214,7 @@ class DualThermostatActor(ActorBase):
                     "Please check your config!".format(attr, list(state.keys())),
                     level="WARNING",
                 )
-    
+
         temp_attrs = ["target_temp_high", "target_temp_low", "current_temperature"]
         for attr in temp_attrs:
             value = state.get(attr)
@@ -227,7 +227,7 @@ class DualThermostatActor(ActorBase):
                     ),
                     level="WARNING",
                 )
-    
+
         allowed_hvac_modes = state.get("hvac_modes")
         if not self.cfg["supports_hvac_modes"]:
             if allowed_hvac_modes:
@@ -239,7 +239,7 @@ class DualThermostatActor(ActorBase):
                     level="WARNING",
                 )
             return
-    
+
         if not allowed_hvac_modes:
             self.log(
                 "Attributes for thermostat contain no 'hvac_modes', Consider "
@@ -307,32 +307,32 @@ class DualThermostatActor(ActorBase):
         possible temperature supported by this particular thermostat.
         The return value is either the temperature to set or None,
         if nothing has to be sent."""
-    
+
         self.log(f"Initial value: {value}", level="DEBUG")
-    
+
         if value.is_off:
             value = self.cfg["off_temp"]
-    
+
         if not value.is_off:
             self.log(f"Applying delta: {self.cfg['delta']} to value: {value}", level="DEBUG")
             value.temp_low += self.cfg['delta'].temp_low
             value.temp_high += self.cfg['delta'].temp_high
             self.log(f"Value after applying delta: {value}", level="DEBUG")
-    
+
             if isinstance(self.cfg["min_temp"], DualTemp):
                 if value.temp_low < self.cfg["min_temp"].temp_low:
                     value.temp_low = self.cfg["min_temp"].temp_low
                 if value.temp_high < self.cfg["min_temp"].temp_high:
                     value.temp_high = self.cfg["min_temp"].temp_high
                 self.log(f"Value after applying min_temp: {value}", level="DEBUG")
-    
+
             if isinstance(self.cfg["max_temp"], DualTemp):
                 if value.temp_low > self.cfg["max_temp"].temp_low:
                     value.temp_low = self.cfg["max_temp"].temp_low
                 if value.temp_high > self.cfg["max_temp"].temp_high:
                     value.temp_high = self.cfg["max_temp"].temp_high
                 self.log(f"Value after applying max_temp: {value}", level="DEBUG")
-    
+
         elif not self.cfg["supports_hvac_modes"]:
             self.log(
                 "Not turning off because it doesn't support HVAC modes.",
@@ -344,7 +344,7 @@ class DualThermostatActor(ActorBase):
                 level="WARNING",
             )
             return None
-    
+
         self.log(f"Final value to be set: {value}", level="DEBUG")
         return value
 
