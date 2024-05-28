@@ -15,6 +15,7 @@ import copy
 import json
 import observable
 import voluptuous as vol
+import time
 
 from ... import common
 from ..room import sync_proxy
@@ -48,6 +49,7 @@ class ActorBase:
 
         self._gave_up_sending = False
         self._resending_timer = None  # type: T.Optional[uuid.UUID]
+        self._last_scheduled_set_time = 0  # Initialize to zero
 
     def __repr__(self) -> str:
         return "<Actor {}>".format(str(self))
@@ -286,6 +288,9 @@ class ActorBase:
 
         self.cancel_resending_timer()
         self._resending_cb({"left_tries": self.cfg["send_retries"] + 1})
+
+        # Record the time of this scheduled set
+        self._last_scheduled_set_time = time.time()
 
         return True, value
 

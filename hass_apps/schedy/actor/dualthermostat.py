@@ -10,6 +10,7 @@ if T.TYPE_CHECKING:
 
 import voluptuous as vol
 import json
+import time
 
 from ... import common
 from .. import stats
@@ -186,6 +187,7 @@ class DualThermostatActor(ActorBase):
         vol.Optional("supports_hvac_modes", default=True): bool,
         vol.Optional("hvac_mode_on", default="heat_cool"): str,
         vol.Optional("hvac_mode_off", default="off"): str,
+        vol.Optional("grace_period", default=7): vol.All(int, vol.Range(min=1)),
     }
 
     expression_helpers = ActorBase.expression_helpers + [ThermostatExpressionHelper]
@@ -195,6 +197,7 @@ class DualThermostatActor(ActorBase):
     def __init__(self, *args: T.Any, **kwargs: T.Any) -> None:
         super().__init__(*args, **kwargs)
         self._current_temp = None  # type: T.Optional[Temp]
+        self.grace_period = self.cfg.get("grace_period", 7)
 
     def check_config_plausibility(self, state: dict) -> None:
         """Is called during initialization to warn the user about some
@@ -398,6 +401,14 @@ class DualThermostatActor(ActorBase):
                 if current_temp != self._current_temp:
                     self._current_temp = current_temp
                     self.events.trigger("current_temp_changed", self, current_temp)
+
+        if target_temp != self._wanted_value:
+            current_time = time.time()
+            if current_time - self._last_scheduled_set_time < self.grace_period:
+                self.log(f"Value mismatch within {self.grace_period} seconds: reapplying scheduled value {self._wanted_value}", level="WARNING")
+                self.set_value(self._wanted_value, force_resend=True)
+            else:
+                self.log("Detected as manual change due to time difference.", level="DEBUG")
 
         return target_temp
 
