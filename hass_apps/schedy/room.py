@@ -17,6 +17,7 @@ import functools
 import os
 import threading
 import traceback
+import time
 
 from .. import common
 from . import expression, util
@@ -86,6 +87,8 @@ class Room:
         self._timer_lock = threading.RLock()
 
         self._reevaluation_timer = None  # type: T.Optional[uuid.UUID]
+
+        self.grace_period = self.cfg.get("grace_period", 7)
 
     def __repr__(self) -> str:
         return "<Room {}>".format(str(self))
@@ -532,6 +535,12 @@ class Room:
             if self.tracking_schedule and synced:
                 self.cancel_rescheduling_timer()
         else:
+            current_time = time.time()
+            if current_time - actor._last_scheduled_set_time < self.grace_period:
+                self.log(f"Value mismatch within {self.grace_period} seconds: reapplying scheduled value {self._wanted_value}", level="WARNING")
+                self.set_value(self._wanted_value, force_resend=True)
+                return
+
             if not self.cfg["allow_manual_changes"]:
                 if self._wanted_value is None:
                     self.log(

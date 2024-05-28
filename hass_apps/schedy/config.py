@@ -314,6 +314,7 @@ ROOM_SCHEMA = vol.Schema(
             vol.Optional("rescheduling_delay", default=0): vol.All(
                 vol.Any(float, int), vol.Range(min=0)
             ),
+            vol.Optional("grace_period", default=7): vol.All(int, vol.Range(min=1)),
             vol.Optional("actors", default=dict): DICTS_IN_DICT_SCHEMA,
             vol.Optional("watched_entities", default=None): WATCHED_ENTITIES_SCHEMA,
             vol.Optional("schedule", default=list): vol.All(
